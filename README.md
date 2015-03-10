@@ -1,4 +1,4 @@
-# combination
+# combination [![Build Status](https://travis-ci.org/vincent-petithory/combination.svg?branch=master)](https://travis-ci.org/vincent-petithory/combination)
 
 Combination is a small program to help generating test tables data.
 
