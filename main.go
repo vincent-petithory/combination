@@ -1,3 +1,33 @@
+// Combination is a tool to generate combinations from a list of grouping data (sets) and prints them to stdout or a file.
+//
+// It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file.
+//
+// A set follows the syntax:
+//
+//     set    := name ": [" value *(value) "]"
+//     name   := string
+//     value  := "\"" string "\""
+//               ; string must be a valid JSON string.
+//
+// For example, the sets:
+//
+//     card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
+//     figure: ["\"Jack\"", "\"Queen\"", "\"King\""]
+//
+// would generate the following test table:
+//
+//     {card: "Heart", figure: "Jack"},
+//     {card: "Heart", figure: "Queen"},
+//     {card: "Heart", figure: "King"},
+//     {card: "Tile", figure: "Jack"},
+//     {card: "Tile", figure: "Queen"},
+//     {card: "Tile", figure: "King"},
+//     {card: "Clover", figure: "Jack"},
+//     {card: "Clover", figure: "Queen"},
+//     {card: "Clover", figure: "King"},
+//     {card: "Pike", figure: "Jack"},
+//     {card: "Pike", figure: "Queen"},
+//     {card: "Pike", figure: "King"},
 package main
 
 import (
@@ -23,9 +53,10 @@ func init() {
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, `combination [flags]
 
-  combination generates combinations for SETS and prints them to FILE.
+  combination is a tool to generate combinations from a list of grouping data (sets)
+  It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file.
 
-  One SET follows the syntax:
+  A set follows the syntax:
 
     set    := name ": [" value *(value) "]"
     name   := string
@@ -34,8 +65,9 @@ func init() {
 
   Examples:
 
-    card: ["\"Hearts\"", "\"Tiles\"", "\"Clovers\"", "\"Pikes\""]
-    bool: ["true", "false"]
+    card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
+    figure: ["\"Jack\"", "\"Queen\"", "\"King\""]
+
 `)
 		flag.PrintDefaults()
 	}
