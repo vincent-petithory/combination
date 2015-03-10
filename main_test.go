@@ -2,18 +2,28 @@ package main
 
 import (
 	"bytes"
+	"log"
 	"testing"
 )
 
 type iotest struct {
-	Input  []FieldValues
-	Output string
+	Input           []Set
+	Output          string
+	NumCombinations int
 }
 
 func (test *iotest) Run(tb testing.TB) {
+	combinations, err := New(test.Input)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if n := len(combinations); test.NumCombinations != n {
+		tb.Fatalf("expected %d combinations, got %d", test.NumCombinations, n)
+	}
+
 	var buf bytes.Buffer
-	if err := WriteTestTable(&buf, test.Input...); err != nil {
-		tb.Fatal(err)
+	if err := WriteCombinations(&buf, combinations); err != nil {
+		log.Fatal(err)
 	}
 	output := buf.String()
 	if test.Output != output {
@@ -23,12 +33,13 @@ func (test *iotest) Run(tb testing.TB) {
 
 func TestSingleField(t *testing.T) {
 	test := &iotest{
-		Input: []FieldValues{
+		Input: []Set{
 			{Name: "F1", Values: []string{`"X"`, `"Y"`}},
 		},
 		Output: `{F1: "X", },
 {F1: "Y", },
 `,
+		NumCombinations: 2,
 	}
 
 	test.Run(t)
@@ -36,7 +47,7 @@ func TestSingleField(t *testing.T) {
 
 func TestMultiField1(t *testing.T) {
 	test := &iotest{
-		Input: []FieldValues{
+		Input: []Set{
 			{Name: "S1", Values: []string{`"X"`, `"Y"`}},
 			{Name: "S2", Values: []string{`"µ"`, `"v"`}},
 			{Name: "I3", Values: []string{"0xEDEA", "42", "0"}},
@@ -54,13 +65,14 @@ func TestMultiField1(t *testing.T) {
 {S1: "Y", S2: "v", I3: 42, },
 {S1: "Y", S2: "v", I3: 0, },
 `,
+		NumCombinations: 12,
 	}
 	test.Run(t)
 }
 
 func TestMultiField2(t *testing.T) {
 	test := &iotest{
-		Input: []FieldValues{
+		Input: []Set{
 			{Name: "S1", Values: []string{`"X"`, `"Y"`, `"Z"`}},
 			{Name: "S2", Values: []string{`"µ"`}},
 			{Name: "I3", Values: []string{"42", "0"}},
@@ -72,13 +84,14 @@ func TestMultiField2(t *testing.T) {
 {S1: "Z", S2: "µ", I3: 42, },
 {S1: "Z", S2: "µ", I3: 0, },
 `,
+		NumCombinations: 6,
 	}
 	test.Run(t)
 }
 
 func TestBiggerAndImmutableField(t *testing.T) {
 	test := &iotest{
-		Input: []FieldValues{
+		Input: []Set{
 			{Name: "name", Values: []string{`""`, "randString()"}},
 			{Name: "gauid", Values: []string{"rga()", "ruid()", "buid()", `""`}},
 			{Name: "suid", Values: []string{"rs()", "ruid()", "buid()", `""`}},
@@ -214,6 +227,7 @@ func TestBiggerAndImmutableField(t *testing.T) {
 {name: randString(), gauid: "", suid: "", cuid: buid(), status: http.StatusBadRequest, },
 {name: randString(), gauid: "", suid: "", cuid: "", status: http.StatusBadRequest, },
 `,
+		NumCombinations: 128,
 	}
 	test.Run(t)
 }
