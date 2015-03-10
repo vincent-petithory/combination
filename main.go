@@ -222,10 +222,14 @@ func WriteCombinations(w io.Writer, combinations []Combination) error {
 		if _, err := fmt.Fprint(w, "{"); err != nil {
 			return err
 		}
-		for _, e := range c {
+		for _, e := range c[:len(c)-1] {
 			if _, err := fmt.Fprintf(w, "%s: %s, ", e.Name, e.Value); err != nil {
 				return err
 			}
+		}
+		e := c[len(c)-1]
+		if _, err := fmt.Fprintf(w, "%s: %s", e.Name, e.Value); err != nil {
+			return err
 		}
 		if _, err := fmt.Fprintln(w, "},"); err != nil {
 			return err
