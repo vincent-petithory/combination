@@ -21,9 +21,9 @@ func init() {
 	flag.StringVar(&srcp, "sets", "-", "read sets from this file, or stdin if -")
 	flag.StringVar(&destp, "o", "-", "write combinations to this file, or stdout if -")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, `combgen [flags]
+		fmt.Fprintln(os.Stderr, `combination [flags]
 
-  combgen generates combinations for SETS and prints them to FILE.
+  combination generates combinations for SETS and prints them to FILE.
 
   One SET follows the syntax:
 
