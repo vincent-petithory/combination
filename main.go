@@ -28,6 +28,13 @@
 //     {card: "Pike", figure: "Jack"},
 //     {card: "Pike", figure: "Queen"},
 //     {card: "Pike", figure: "King"},
+//
+// In a shell:
+//
+//     cat << EOF | combination
+//     card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
+//     figure: ["\"Jack\"", "\"Queen\"", "\"King\""]
+//     EOF
 package main
 
 import (
