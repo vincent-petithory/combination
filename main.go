@@ -154,6 +154,9 @@ type Set struct {
 // MarshalText implements TextMarshaler.
 func (s Set) MarshalText() ([]byte, error) {
 	buf := new(bytes.Buffer)
+	if s.Name == "" {
+		return nil, ErrSetInvalidName
+	}
 	if _, err := fmt.Fprint(buf, s.Name, ": "); err != nil {
 		return nil, err
 	}

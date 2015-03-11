@@ -3,7 +3,11 @@ package main
 import (
 	"bytes"
 	"log"
+	"reflect"
+	"strings"
 	"testing"
+	"testing/quick"
+	"unicode"
 )
 
 type iotest struct {
@@ -230,4 +234,81 @@ func TestBiggerAndImmutableField(t *testing.T) {
 		NumCombinations: 128,
 	}
 	test.Run(t)
+}
+
+func TestErrNoValues(t *testing.T) {
+	combinations, err := New([]Set{
+		{Name: "x", Values: []string{"0", "1", "2"}},
+		{Name: "y", Values: []string{}},
+		{Name: "z", Values: []string{"3", "4", "5"}},
+	})
+	if err == nil {
+		t.Error("expected a non-nil error, got nil")
+	}
+	if combinations != nil {
+		t.Errorf("expected a nil combinations, got %#v", combinations)
+	}
+}
+
+// TestMarshalUnmarshalSet tests a roundtrip {enc,dec}oding of a Set.
+func TestMarshalUnmarshalSet(t *testing.T) {
+	if err := quick.Check(func(name string, values []string) bool {
+		if name == "" {
+			set := Set{Name: name, Values: values}
+			_, err := set.MarshalText()
+			if err == nil {
+				t.Error("expected non-nil error, got nil")
+				return false
+			}
+			return true
+		}
+		// cleanup name
+		var buf bytes.Buffer
+		for _, ruune := range name {
+			// Go identifier
+			if unicode.IsLetter(ruune) || unicode.IsDigit(ruune) {
+				buf.WriteRune(ruune)
+			}
+		}
+
+		iset := Set{Name: buf.String(), Values: values}
+		if iset.Name == "" {
+			// name had no valid rune, just put one
+			iset.Name = "a"
+		}
+		b, err := iset.MarshalText()
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+		var oset Set
+		if err := oset.UnmarshalText(b); err != nil {
+			t.Error(err)
+			return false
+		}
+		if !reflect.DeepEqual(iset, oset) {
+			t.Errorf("expected %#v, got %#v", iset, oset)
+			return false
+		}
+		return true
+	}, nil); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestParseSets(t *testing.T) {
+	input := `card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
+figure: ["\"Jack\"", "\"Queen\"", "\"King\""]`
+	expectedSets := []Set{
+		{Name: "card", Values: []string{"\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""}},
+		{Name: "figure", Values: []string{"\"Jack\"", "\"Queen\"", "\"King\""}},
+	}
+	sets, err := parseSets(strings.NewReader(input))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !reflect.DeepEqual(sets, expectedSets) {
+		t.Errorf("expected %#v, got %#v", expectedSets, sets)
+	}
 }
