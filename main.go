@@ -1,6 +1,6 @@
 // Combination is a tool to generate combinations from a list of grouping data (sets) and prints them to stdout or a file.
 //
-// It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file. The output generated is valid Go syntax.
+// It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file. The output generated is valid Go syntax, as long as the set name and values are.
 //
 // A set follows the syntax:
 //
@@ -59,7 +59,7 @@ func init() {
 
   combination is a tool to generate combinations from a list of grouping data (sets)
   It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file.
-  The output generated is valid Go syntax.
+  The output generated is valid Go syntax, as long as the set name and values are.
 
  A set follows the syntax:
 
