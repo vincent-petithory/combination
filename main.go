@@ -1,46 +1,43 @@
 // Combination is a tool to generate combinations from a list of grouping data (sets) and prints them to stdout or a file.
 //
-// It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file.
+// It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file. The output generated is valid Go syntax.
 //
 // A set follows the syntax:
 //
-//     set    := name ": [" value *(value) "]"
-//     name   := string
-//     value  := "\"" string "\""
-//               ; string must be a valid JSON string.
+//     name: value value ...
+//
+// The value list is much like a list of arguments in a shell:
+// it is space-separated, and "non-safe" strings must be quoted.
 //
 // For example, the sets:
 //
-//     card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
-//     figure: ["\"Jack\"", "\"Queen\"", "\"King\""]
+//     card: "Heart Red" Tile Clover "Pike Black"
+//     figure: Jack Queen King
 //
 // would generate the following test table:
 //
-//     {card: "Heart", figure: "Jack"},
-//     {card: "Heart", figure: "Queen"},
-//     {card: "Heart", figure: "King"},
+//     {card: "Heart Red", figure: "Jack"},
+//     {card: "Heart Red", figure: "Queen"},
+//     {card: "Heart Red", figure: "King"},
 //     {card: "Tile", figure: "Jack"},
 //     {card: "Tile", figure: "Queen"},
 //     {card: "Tile", figure: "King"},
 //     {card: "Clover", figure: "Jack"},
 //     {card: "Clover", figure: "Queen"},
 //     {card: "Clover", figure: "King"},
-//     {card: "Pike", figure: "Jack"},
-//     {card: "Pike", figure: "Queen"},
-//     {card: "Pike", figure: "King"},
+//     {card: "Pike Black", figure: "Jack"},
+//     {card: "Pike Black", figure: "Queen"},
+//     {card: "Pike Black", figure: "King"},
 //
 // In a shell:
 //
 //     cat << EOF | combination
-//     card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
-//     figure: ["\"Jack\"", "\"Queen\"", "\"King\""]
+//     card: "Heart Red" Tile Clover "Pike Black"
+//     figure: Jack Queen King
 //     EOF
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -62,18 +59,26 @@ func init() {
 
   combination is a tool to generate combinations from a list of grouping data (sets)
   It takes the sets, one per line, on stdin or a file and prints the combinations to stdout or a file.
+  The output generated is valid Go syntax.
 
-  A set follows the syntax:
+ A set follows the syntax:
 
-    set    := name ": [" value *(value) "]"
-    name   := string
-    value  := "\"" string "\""
-              ; string must be a valid JSON string.
+     name: value value ...
 
-  Examples:
+ The value list is much like a list of arguments in a shell:
+ it is space-separated, and "non-safe" strings must be quoted.
 
-    card: ["\"Heart\"", "\"Tile\"", "\"Clover\"", "\"Pike\""]
-    figure: ["\"Jack\"", "\"Queen\"", "\"King\""]
+ For example, the sets:
+
+     card: "Heart Red" Tile Clover "Pike Black"
+     figure: Jack Queen King
+
+ In a shell:
+
+     cat << EOF | combination
+     card: "Heart Red" Tile Clover "Pike Black"
+     figure: Jack Queen King
+     EOF
 
 `)
 		flag.PrintDefaults()
@@ -127,68 +132,6 @@ func main() {
 	}
 }
 
-func parseSets(r io.Reader) ([]Set, error) {
-	var sets []Set
-	bufsrc := bufio.NewScanner(r)
-	bufsrc.Split(bufio.ScanLines)
-	for bufsrc.Scan() {
-		var set Set
-		if err := set.UnmarshalText([]byte(bufsrc.Text())); err != nil {
-			return nil, err
-		}
-		sets = append(sets, set)
-	}
-
-	if err := bufsrc.Err(); err != nil {
-		return nil, err
-	}
-	return sets, nil
-}
-
-// Set represents a named grouping of values (a set).
-type Set struct {
-	Name   string
-	Values []string
-}
-
-// MarshalText implements TextMarshaler.
-func (s Set) MarshalText() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	if s.Name == "" {
-		return nil, ErrSetInvalidName
-	}
-	if _, err := fmt.Fprint(buf, s.Name, ": "); err != nil {
-		return nil, err
-	}
-	if err := json.NewEncoder(buf).Encode(s.Values); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// UnmarshalText implements TextUnmarshaler.
-func (s *Set) UnmarshalText(text []byte) error {
-	r := bufio.NewReader(bytes.NewReader(text))
-	name, err := r.ReadString(':')
-	if err != nil {
-		return err
-	}
-	s.Name = name[:len(name)-1]
-	if s.Name == "" {
-		return ErrSetInvalidName
-	}
-	runne, _, err := r.ReadRune()
-	if err != nil {
-		return err
-	}
-	if runne != ' ' {
-		if err := r.UnreadRune(); err != nil {
-			return err
-		}
-	}
-	return json.NewDecoder(r).Decode(&s.Values)
-}
-
 type elementColumn []Element
 
 type Element struct {
@@ -199,8 +142,11 @@ type Element struct {
 // ErrSetNoValues represents an error when a set contains no values.
 var ErrSetNoValues = errors.New("set has no values")
 
-// ErrSetInvalidName represents an erro when a set has an empty name or an invalid string value.
+// ErrSetInvalidName represents an error when a set has an empty name or an invalid string value.
 var ErrSetInvalidName = errors.New("set has an invalid name")
+
+// ErrValueNoClosingQuote represents an error when a quoted set's value has no closing quote.
+var ErrValueNoClosingQuote = errors.New("set value has no closing quote")
 
 // New creates all combinations from sets.
 //
