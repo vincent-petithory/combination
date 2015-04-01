@@ -100,6 +100,15 @@ figure: Jack Queen King`,
 				{Name: "figure", Values: []string{"Jack", "Queen", "King"}},
 			},
 		},
+		{
+			// trailing spaces
+			input: `card: Heart Tile Clover Pike   
+figure: Jack Queen King`,
+			sets: []Set{
+				{Name: "card", Values: []string{"Heart", "Tile", "Clover", "Pike"}},
+				{Name: "figure", Values: []string{"Jack", "Queen", "King"}},
+			},
+		},
 	}
 	for _, test := range tests {
 		sets, err := parseSets(strings.NewReader(test.input))

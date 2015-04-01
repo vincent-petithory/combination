@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"strconv"
+	"strings"
 )
 
 func parseSets(r io.Reader) ([]Set, error) {
@@ -13,7 +14,8 @@ func parseSets(r io.Reader) ([]Set, error) {
 	bufsrc.Split(bufio.ScanLines)
 	for bufsrc.Scan() {
 		var set Set
-		if err := set.UnmarshalText([]byte(bufsrc.Text())); err != nil {
+		text := strings.TrimSpace(bufsrc.Text())
+		if err := set.UnmarshalText([]byte(text)); err != nil {
 			return nil, err
 		}
 		sets = append(sets, set)
